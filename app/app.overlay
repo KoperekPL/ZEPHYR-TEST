@@ -1,0 +1,75 @@
+/*#include <zephyr/dt-bindings/pinctrl/rpi-pico-pinctrl-common.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+*/
+/ {
+    chosen {
+        zephyr,console = &cdc_acm_uart0;
+    };
+};
+
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};
+
+&adc {
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel@0 {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+};
+
+/ {
+    zephyr,user {
+        io-channels = <&adc 0>;
+    };
+};
+
+/ {
+    aliases {
+        pwmleft = &pwm_left;
+        pwmright = &pwm_right;
+    };
+
+    pwm_nodes {
+        compatible = "pwm-leds";
+        
+        pwm_left: pwm_0 {
+            /* ZMIANA: PWM_1A (GPIO 18) to sprzętowy kanał 2 */
+            pwms = <&pwm 2 PWM_USEC(2000) PWM_POLARITY_NORMAL>;
+        };
+        
+        pwm_right: pwm_1 {
+            /* PWM_0B (GPIO 17) to sprzętowy kanał 1 */
+            pwms = <&pwm 1 PWM_USEC(2000) PWM_POLARITY_NORMAL>;
+        };
+    };
+};
+
+&pinctrl {
+    pwm_default: pwm_default {
+        group1 {
+            /* Zostaje bez zmian - konfiguracja dla pinu 18 i 17 */
+            pinmux = <PWM_1A_P18>, <PWM_0B_P17>;
+        };
+    };
+};
+
+&pwm {
+    status = "okay";
+    pinctrl-0 = <&pwm_default>;
+    pinctrl-names = "default";
+    
+    /* Dzielnik dla Slice 0 (obsługuje m.in. pin 17 - prawy) */
+    divider-int-0 = <255>; 
+    /* NOWE: Dzielnik dla Slice 1 (obsługuje m.in. pin 18 - lewy) */
+    divider-int-1 = <255>; 
+};
